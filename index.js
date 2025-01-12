@@ -24,6 +24,7 @@ app.use(bodyParser.json()); // This is for other API routes that don't need the 
 // Stripe webhook endpoint (use raw middleware here)
 const endpointSecret = 'whsec_S1ThEWb8hHLRP1rQnzm7PCah8lASmKba';
 app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    console.log('event trigered')
     const sigHeader = req.headers['stripe-signature'];
     let event;
     try {
