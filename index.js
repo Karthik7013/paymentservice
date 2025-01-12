@@ -23,51 +23,65 @@ app.use(bodyParser.json()); // This is for other API routes that don't need the 
 
 // Stripe webhook endpoint (use raw middleware here)
 const endpointSecret = 'whsec_S1ThEWb8hHLRP1rQnzm7PCah8lASmKba';
-app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-    console.log('event trigered')
-    const sigHeader = req.headers['stripe-signature'];
-    let event;
-    try {
-        // Verify the webhook signature using Stripe's constructEvent method
-        event = stripe.webhooks.constructEvent(req.body, sigHeader, endpointSecret);
-    } catch (err) {
-        console.log(`Webhook signature verification failed: ${err}`);
-        return res.status(400).send(`Webhook Error: ${err.message}`);
+app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async (request, response) => {
+    let event = request.body;
+    // Only verify the event if you have an endpoint secret defined.
+    // Otherwise use the basic event deserialized with JSON.parse
+    if (endpointSecret) {
+        // Get the signature sent by Stripe
+        const signature = request.headers['stripe-signature'];
+        try {
+            event = stripe.webhooks.constructEvent(
+                request.body,
+                signature,
+                endpointSecret
+            );
+        } catch (err) {
+            console.log(`⚠️  Webhook signature verification failed.`, err.message);
+            return response.sendStatus(400);
+        }
     }
-    console.log(event);
 
-    // Handle the event based on the event type
-    // switch (event.type) {
-    //     case 'payment_intent.succeeded':
-    //         const paymentIntent = event.data.object;
-    //         const transactionId = paymentIntent.id;
-    //         const amountReceived = paymentIntent.amount_received / 100;  // Convert from cents to your currency
-    //         const status = paymentIntent.status;
-    //         const customerId = paymentIntent.customer;
+    // Handle the event
+    switch (event.type) {
+        case 'payment_intent.succeeded':
+            const paymentIntent = event.data.object;
+            console.log(`PaymentIntent for ${paymentIntent.amount} was successful!`);
+            // Then define and call a method to handle the successful payment intent.
+            // handlePaymentIntentSucceeded(paymentIntent);
+            break;
+        default:
+            // Unexpected event type
+            console.log(`Unhandled event type ${event.type}.`);
+    }
 
-    //         try {
-    //             // Insert transaction data into PostgreSQL
-    //             const result = await client.query(
-    //                 'INSERT INTO transactions (transaction_id, amount, status, customer_id) VALUES ($1, $2, $3, $4) RETURNING *',
-    //                 [transactionId, amountReceived, status, customerId]
-    //             );
-    //             console.log('Transaction inserted:', result.rows[0]);
-    //         } catch (error) {
-    //             console.error('Error inserting transaction into database:', error);
-    //         }
-    //         break;
+    // Return a 200 response to acknowledge receipt of the event
+    response.send({ received: true });
 
-    //     case 'payment_intent.payment_failed':
-    //         const failedPaymentIntent = event.data.object;
-    //         console.log(`Payment failed: ${failedPaymentIntent.id}`);
-    //         break;
 
-    //     default:
-    //         console.log(`Unhandled event type: ${event.type}`);
-    // }
 
-    // Return a success response to Stripe
-    res.json({ received: true });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 });
 
 // Checkout session creation endpoint (unchanged)
