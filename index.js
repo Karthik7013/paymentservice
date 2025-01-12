@@ -2,17 +2,6 @@ const express = require('express');
 const stripe = require('stripe')('sk_test_51QfNfPI2BljzQKSv7xGethNSgetLKLs6cHxDbS0eYi2dAv6FF8RGGyJBzXpHFvVC6yoNOjUSo1nOmZSu95CGC97t00JduHrTyI');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-// const { Client } = require('pg');
-
-// PostgreSQL client setup
-// const client = new Client({
-//     user: 'your_user',
-//     host: 'localhost',
-//     database: 'your_database',
-//     password: 'your_password',
-//     port: 5432,
-// });
-// client.connect();
 
 const app = express();
 const port = 3000;
@@ -23,6 +12,8 @@ app.use(bodyParser.json()); // This is for other API routes that don't need the 
 
 // Stripe webhook endpoint (use raw middleware here)
 const endpointSecret = 'whsec_S1ThEWb8hHLRP1rQnzm7PCah8lASmKba';
+
+// Use express.raw() for the webhook route only
 app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async (request, response) => {
     let event = request.body;
     // Only verify the event if you have an endpoint secret defined.
@@ -57,31 +48,6 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
 
     // Return a 200 response to acknowledge receipt of the event
     response.send({ received: true });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 });
 
 // Checkout session creation endpoint (unchanged)
