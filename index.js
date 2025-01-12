@@ -8,11 +8,9 @@ const port = 3000;
 
 // Middleware for other routes
 app.use(cors());
-app.use(bodyParser.json()); // This is for other API routes that don't need the raw body
 
 // Stripe webhook endpoint (use raw middleware here)
 const endpointSecret = 'whsec_S1ThEWb8hHLRP1rQnzm7PCah8lASmKba';
-
 // Use express.raw() for the webhook route only
 app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async (request, response) => {
     let event = request.body;
@@ -49,6 +47,8 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
     // Return a 200 response to acknowledge receipt of the event
     response.send({ received: true });
 });
+
+app.use(bodyParser.json()); // This is for other API routes that don't need the raw body
 
 // Checkout session creation endpoint (unchanged)
 app.post("/api/create-checkout-session", async (req, res) => {
